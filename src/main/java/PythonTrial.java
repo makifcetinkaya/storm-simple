@@ -14,7 +14,7 @@ public class PythonTrial {
 		String script_dir = "~/Downloads";
 		Runtime r = Runtime.getRuntime();
 		Process p;
-		System.out.println("attempting to execute);
+		System.out.println("attempting to execute");
 		p = r.exec("python "+script_dir+" example.py "+file);
 		int exitValue = p.waitFor();
 		System.out.println("exit value is: "+exitValue);		

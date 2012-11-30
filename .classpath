@@ -6,6 +6,7 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry excluding="main/java/|main/resources/|test/java/|test/resources/" kind="src" path="src"/>
 	<classpathentry excluding="**" kind="src" output="target/classes" path="src/main/resources">
 		<attributes>
 			<attribute name="maven.pomderived" value="true"/>
@@ -23,7 +24,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="src/main/resources/CurveSmooth.java"/>
-	<classpathentry kind="lib" path="src/main/SimpleTopology.java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5">
 		<attributes>
 			<attribute name="maven.pomderived" value="true"/>
@@ -34,14 +34,7 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/home/affective/.m2/repository/storm/storm/0.8.1/storm-0.8.1.jar">
-		<attributes>
-			<attribute name="maven.pomderived" value="true"/>
-			<attribute name="maven.groupId" value="storm"/>
-			<attribute name="maven.artifactId" value="storm"/>
-			<attribute name="maven.version" value="0.8.1"/>
-			<attribute name="maven.scope" value="provided"/>
-		</attributes>
-	</classpathentry>
+	<classpathentry kind="lib" path="/home/affective/Downloads/commons-math3-3.0"/>
+	<classpathentry kind="lib" path="/home/affective/Downloads/commons-math3-3.0/commons-math3-3.0.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
