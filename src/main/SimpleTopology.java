@@ -7,6 +7,10 @@ import java.io.LineNumberReader;
 import java.text.SimpleDateFormat;
 import java.util.Map;
 
+import org.apache.commons.math3.linear.MatrixUtils;
+
+import flanagan.analysis.CurveSmooth;
+
 import backtype.storm.spout.SpoutOutputCollector;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -38,23 +42,34 @@ public class SimpleTopology {
 
 		public void execute(Tuple input) {
 			String file = input.getString(0);
-			float[][] fileContent = getData(file);
+			double[][] fileContent = getData(file);
+			double[] edaData = getColumnData(fileContent, 0);
+			
+			CurveSmooth cs = new CurveSmooth(edaData);
+			double[] smoothedEDA = cs.getSmoothedValues();
 			
 			
 		}
-		
-		private float[][] getData(String file){
+		private double[] getColumnData(double[][] fileContent, int c){
+			int rows = fileContent.length;
+			double[] colData = new double[rows];
+			for(int i = 0; i < rows; i++){
+				colData[i] = fileContent[i][c];
+			}
+			return colData;
+		}
+		private double[][] getData(String file){
 			FileReader fReader;
 			LineNumberReader lnr;
 			BufferedReader bReader;
 			int rows;
-			float[][] fileContent;
+			double[][] fileContent;
 			try {
 				fReader = new FileReader(file);
 				lnr = new LineNumberReader(fReader);
 				lnr.skip(Integer.MAX_VALUE);
 				rows = lnr.getLineNumber() - HEADER_LENGTH; 
-				fileContent = new float[rows][6];
+				fileContent = new double[rows][6];
 				lnr.close();
 				
 				bReader = new BufferedReader(fReader);
@@ -72,7 +87,7 @@ public class SimpleTopology {
 					}else if(dataLine){
 						int i = 0;
 						for(String s:line.split(DELIMITER)){
-							fileContent[dataRow][i] = Float.parseFloat(s); 
+							fileContent[dataRow][i] = Double.parseDouble(s); 
 							i++;
 						}
 						dataRow++;						
