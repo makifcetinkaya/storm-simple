@@ -35,5 +35,30 @@
 			<!-- keep storm out of the jar-with-dependencies -->
 			<scope>provided</scope>
 		</dependency>
-	</dependencies>
+		<dependency>
+			<groupId>flanagan</groupId>
+			<artifactId>flanagan</artifactId>
+			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-math3</groupId>
+			<artifactId>commons-math3</artifactId>
+			<version>3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>LiveGraph</groupId>
+			<artifactId>LiveGraph</artifactId>
+			<version>2.0.1</version>
+		</dependency>
+		<dependency>
+			<groupId>jfree</groupId>
+			<artifactId>jfreechart</artifactId>
+			<version>1.0.13</version>
+		</dependency>
+		<dependency>
+			<groupId>jmathplot</groupId>
+			<artifactId>jmathplot</artifactId>
+			<version>1.0</version>
+		</dependency>
+</dependencies>
 </project>
