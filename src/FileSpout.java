@@ -13,6 +13,9 @@ public class FileSpout extends BaseRichSpout{
 		private SpoutOutputCollector _collector;
 		public static final File EDA_FOLDER = new File("/home/affective/Downloads");
 		
+		public FileSpout(){
+			System.out.println("New FileSpout is created");
+		}
 		public void open(Map conf, TopologyContext context,
 				SpoutOutputCollector collector) {
 			// TODO Auto-generated method stub
@@ -21,15 +24,20 @@ public class FileSpout extends BaseRichSpout{
 
 		public void nextTuple() {
 			// TODO Auto-generated method stub
-			Utils.sleep(100);
+			Utils.sleep(1000);
 			String filename = getUnprocessedFile(EDA_FOLDER);
-			_collector.emit(new Values(filename));
+			if(filename != null){
+				System.out.println("------------- EMITTING THE FILE "+filename+" ---------------");
+				_collector.emit(new Values(filename));
+			}else{
+				System.out.println("FILESPOUT COULD NOT FIND UNPROCESSED EDA FILE");
+			}
 			
 		}
 		
 		private String getUnprocessedFile(File folder){
 			for(String file:folder.list()){
-				if (! file.matches(".eda_part")){
+				if (file.contains("eda_part")){
 					return file;
 				}
 //				if(! file.endsWith("PRO")){
