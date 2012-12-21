@@ -18,7 +18,7 @@ public class EDAFileReader {
 	private static final String DATA_LINE_SEP = "------------";
 	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-mm-dd HH:mm:ss Z");
 	private static final String DELIMITER = ",";
-	private static final int HEADER_LENGTH = 10;
+	private static final int HEADER_LENGTH = 9;
 	
 	public EDAFileReader(String filename){
 		this.filename = filename;
@@ -34,19 +34,17 @@ public class EDAFileReader {
 	}
 	
 	public void readFileIntoArray(){
+		FileReader fReader;
+		BufferedReader bReader;
+		LineNumberReader lnr;
 		String file = FileSpout.EDA_FOLDER+"/"+filename;
 		System.out.println("READING FILE INTO ARRAY:"+FileSpout.EDA_FOLDER+"/"+filename);
 		try {
 			
-			FileReader fReader = new FileReader(file);
+			fReader = new FileReader(file);			
+			bReader = new BufferedReader(fReader);					
+			lnr = new LineNumberReader(fReader);
 			
-			BufferedReader bReader = new BufferedReader(fReader);
-			while(!bReader.ready()){
-				System.out.println("not ready");
-				Utils.sleep(50);
-			}
-			
-			LineNumberReader lnr = new LineNumberReader(fReader);
 			lnr.skip(Integer.MAX_VALUE);
 			int rows = lnr.getLineNumber() - HEADER_LENGTH; 
 			fileContent = new double[rows][6];
@@ -64,12 +62,12 @@ public class EDAFileReader {
 			while((line = bReader.readLine()) != null){
 				if(line.startsWith(S1)){
 					// get date time
-					System.out.println("time line");
+					//System.out.println("time line");
 				}else if(line.startsWith(S2)){
 					// get sampling rate
-					System.out.println("sampling rate line");
-				}else if(line.matches(DATA_LINE_SEP)){
-					System.out.println("Data lines reached");
+					//System.out.println("sampling rate line");
+				}else if(line.contains(DATA_LINE_SEP)){
+					//System.out.println("Data lines reached");
 					dataLine = true;
 				}else if(dataLine){
 					int i = 0;

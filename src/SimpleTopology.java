@@ -20,7 +20,7 @@ public class SimpleTopology {
 		builder.setBolt("peakfinder", pfb, 2).shuffleGrouping("filereader");
 		
 		Config conf = new Config();
-		conf.setDebug(true);
+		conf.setDebug(false);
 		
 		LocalCluster cluster = new LocalCluster();
 		cluster.submitTopology("test", conf, builder.createTopology());

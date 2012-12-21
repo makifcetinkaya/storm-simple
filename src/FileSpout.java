@@ -1,4 +1,5 @@
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Map;
 
 import backtype.storm.spout.SpoutOutputCollector;
@@ -11,8 +12,10 @@ import backtype.storm.utils.Utils;
 
 public class FileSpout extends BaseRichSpout{
 		private SpoutOutputCollector _collector;
-		public static final File EDA_FOLDER = new File("/home/affective/Downloads");
+		public static final File EDA_FOLDER = new File("/home/affective/Downloads/slices");
+		private static final String CHUNK_SIZE = null;
 		
+		private ArrayList<String> sentFiles = new ArrayList<String>();
 		public FileSpout(){
 			System.out.println("New FileSpout is created");
 		}
@@ -24,11 +27,15 @@ public class FileSpout extends BaseRichSpout{
 
 		public void nextTuple() {
 			// TODO Auto-generated method stub
-			Utils.sleep(1000);
-			String filename = getUnprocessedFile(EDA_FOLDER);
+			Utils.sleep(5);
+			String filename = getUnprocessedFile(EDA_FOLDER);			
+			
 			if(filename != null){
 				System.out.println("------------- EMITTING THE FILE "+filename+" ---------------");
-				_collector.emit(new Values(filename));
+				String part = filename.split(".eda_part")[1];
+				String chunkIndex = part.split("of")[0];				
+				String fileInfo = filename+","+chunkIndex;
+				_collector.emit(new Values(fileInfo));
 			}else{
 				System.out.println("FILESPOUT COULD NOT FIND UNPROCESSED EDA FILE");
 			}
@@ -37,18 +44,16 @@ public class FileSpout extends BaseRichSpout{
 		
 		private String getUnprocessedFile(File folder){
 			for(String file:folder.list()){
-				if (file.contains("eda_part")){
+				if (file.contains("eda_part") && ! sentFiles.contains(file)){
+					sentFiles.add(file);
 					return file;
 				}
-//				if(! file.endsWith("PRO")){
-//					return file;
-//				}
 			}
 			return null;
 		}
 		public void declareOutputFields(OutputFieldsDeclarer declarer) {
 			// TODO Auto-generated method stub
-			declarer.declare(new Fields("file"));
+			declarer.declare(new Fields("fileInfo"));
 		}
 
 		
