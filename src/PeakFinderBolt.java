@@ -1,4 +1,3 @@
-import java.util.ArrayList;
 import java.util.Map;
 
 import backtype.storm.task.OutputCollector;
@@ -20,34 +19,34 @@ public class PeakFinderBolt extends BaseRichBolt{
 	}
 
 	/*
-	 * Takes smoothed double array as input, and find peaks on the values
+	 * Takes a float of byte array as input, and find peaks on the values
 	 * */
 	public void execute(Tuple input) {
 		// TODO create peak detector according to sampling rate
-		String part = input.getString(0);
-		String edaString = input.getString(1);
-		double[] edaArray = getEDAArray(edaString);
-		System.out.println("------LENGTH OF EDA ARRAY IS:"+edaArray.length);
+		String metadata = input.getString(0);
+		byte[] data = input.getBinary(1);
+		float[] fArr = Utils.toFloatArr(data);
 		
-		peakDetector = new PeakDetector(200, 3); 
-		ArrayList<Integer> peakIndices = peakDetector.detectPeaks(edaArray);
-		System.out.println("------PEAK INDICES ARE: "+peakIndices.toString());
-
+//		peakDetector = new PeakDetector(200, 3); 
+//		ArrayList<Integer> peakIndices = peakDetector.detectPeaks(edaArray);
+//		System.out.println("------PEAK INDICES ARE: "+peakIndices.toString());
+//		
+//		_collector.emit(new Values(metadata, bArr));
 	}
 	
-	private double[] getEDAArray(String edaString){
-		String[] strVals = edaString.substring(1, edaString.length()-1).split(",");
-		double[] edaArray = new double[strVals.length];
-		for(int i=0; i<strVals.length; i++){
-			edaArray[i] = Double.parseDouble(strVals[i]);
-			i++;
-		}
-		return edaArray;
-	}
+//	private double[] getEDAArray(String edaString){
+//		String[] strVals = edaString.substring(1, edaString.length()-1).split(",");
+//		double[] edaArray = new double[strVals.length];
+//		for(int i=0; i<strVals.length; i++){
+//			edaArray[i] = Double.parseDouble(strVals[i]);
+//			i++;
+//		}
+//		return edaArray;
+//	}
 
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		// TODO Auto-generated method stub
-		declarer.declare(new Fields("part","eda"));
+		declarer.declare(new Fields("metadata","eda"));
 	}
 
 }

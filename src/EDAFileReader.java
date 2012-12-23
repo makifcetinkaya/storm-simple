@@ -37,8 +37,8 @@ public class EDAFileReader {
 		FileReader fReader;
 		BufferedReader bReader;
 		LineNumberReader lnr;
-		String file = FileSpout.EDA_FOLDER+"/"+filename;
-		System.out.println("READING FILE INTO ARRAY:"+FileSpout.EDA_FOLDER+"/"+filename);
+		String file = EDAFileSpout.EDA_FOLDER+"/"+filename;
+		System.out.println("READING FILE INTO ARRAY:"+EDAFileSpout.EDA_FOLDER+"/"+filename);
 		try {
 			
 			fReader = new FileReader(file);			
@@ -79,7 +79,7 @@ public class EDAFileReader {
 				}
 			}
 			
-			System.out.println("FILE "+FileSpout.EDA_FOLDER+"/"+filename+" READ INTO ARRAY...");
+			System.out.println("FILE "+EDAFileSpout.EDA_FOLDER+"/"+filename+" READ INTO ARRAY...");
 			System.out.println("ARRAY SIZE is: "+fileContent.length);
 			
 		} catch (FileNotFoundException e) {

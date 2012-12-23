@@ -10,13 +10,13 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
 
-public class FileSpout extends BaseRichSpout{
+public class EDAFileSpout extends BaseRichSpout{
 		private SpoutOutputCollector _collector;
 		public static final File EDA_FOLDER = new File("/home/affective/Downloads/slices");
-		private static final String CHUNK_SIZE = null;
+		private static final int CHUNK_SIZE = 2000;
 		
 		private ArrayList<String> sentFiles = new ArrayList<String>();
-		public FileSpout(){
+		public EDAFileSpout(){
 			System.out.println("New FileSpout is created");
 		}
 		public void open(Map conf, TopologyContext context,
@@ -34,7 +34,7 @@ public class FileSpout extends BaseRichSpout{
 				System.out.println("------------- EMITTING THE FILE "+filename+" ---------------");
 				String part = filename.split(".eda_part")[1];
 				String chunkIndex = part.split("of")[0];				
-				String fileInfo = filename+","+chunkIndex;
+				String fileInfo = filename+","+CHUNK_SIZE+","+chunkIndex;
 				_collector.emit(new Values(fileInfo));
 			}else{
 				System.out.println("FILESPOUT COULD NOT FIND UNPROCESSED EDA FILE");

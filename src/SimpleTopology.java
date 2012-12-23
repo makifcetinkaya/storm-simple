@@ -12,7 +12,7 @@ public class SimpleTopology {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		TopologyBuilder builder = new TopologyBuilder();
-		FileSpout fs = new FileSpout();
+		EDAFileSpout fs = new EDAFileSpout();
 		builder.setSpout("filespout", fs, 2);
 		EDASmoothBolt frb = new EDASmoothBolt();
 		builder.setBolt("filereader", frb ,2).shuffleGrouping("filespout");
