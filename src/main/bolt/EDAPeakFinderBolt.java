@@ -1,6 +1,11 @@
+package main.bolt;
+
+
 import java.util.ArrayList;
 import java.util.Map;
 
+import main.utils.Conversions;
+import main.utils.PeakDetector;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
@@ -10,10 +15,9 @@ import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 
 
-public class PeakFinderBolt extends BaseRichBolt{
+public class EDAPeakFinderBolt extends BaseRichBolt{
 
 	private OutputCollector _collector;
-	private PeakDetector1 peakDetector;
 	public void prepare(Map stormConf, TopologyContext context,
 			OutputCollector collector) {
 		// TODO Auto-generated method stub
@@ -28,13 +32,13 @@ public class PeakFinderBolt extends BaseRichBolt{
 		String metadata = input.getString(0);
 		int chunkIndex = Integer.parseInt(metadata.split(",")[2]);
 		byte[] data = input.getBinary(1);
-		float[] vals = Utils.toFloatArr(data);
+		float[] vals = Conversions.toFloatArr(data);
 		ArrayList[] peaks = PeakDetector.peakDetect(vals, 300, (float)0.1);
 		ArrayList<Integer> maxPeaks = peaks[0];
 		ArrayList<Integer> minPeaks = peaks[1];
 		
-		byte[] maxPeaksByta = Utils.toBytaArr(maxPeaks.toArray(new Integer[0]));
-		byte[] minPeaksByta = Utils.toBytaArr(minPeaks.toArray(new Integer[0]));
+		byte[] maxPeaksByta = Conversions.toBytaArr(maxPeaks.toArray(new Integer[0]));
+		byte[] minPeaksByta = Conversions.toBytaArr(minPeaks.toArray(new Integer[0]));
 		System.out.println("---------- SENDING PEAKS FOR PART: "+chunkIndex+"-----------");
 		_collector.emit(new Values(metadata, data, maxPeaksByta, minPeaksByta));
 	}

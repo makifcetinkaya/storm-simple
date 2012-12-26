@@ -1,3 +1,7 @@
+import main.bolt.EDACombineBolt;
+import main.bolt.EDASmoothBolt;
+import main.bolt.EDAPeakFinderBolt;
+import main.spout.EDAFileSpout;
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
 import backtype.storm.topology.TopologyBuilder;
@@ -14,10 +18,10 @@ public class SimpleTopology {
 		TopologyBuilder builder = new TopologyBuilder();
 		EDAFileSpout fs = new EDAFileSpout();
 		builder.setSpout("filespout", fs, 1);
-		EDASmoothBolt frb = new EDASmoothBolt();
-		builder.setBolt("smoother", frb ,5).shuffleGrouping("filespout");
-		PeakFinderBolt pfb = new PeakFinderBolt();
-		builder.setBolt("peakfinder", pfb, 5).shuffleGrouping("smoother");
+		EDASmoothBolt esb = new EDASmoothBolt();
+		builder.setBolt("smoother", esb ,5).shuffleGrouping("filespout");
+		EDAPeakFinderBolt epfb = new EDAPeakFinderBolt();
+		builder.setBolt("peakfinder", epfb, 5).shuffleGrouping("smoother");
 		EDACombineBolt ecb = new EDACombineBolt();
 		builder.setBolt("combiner", ecb, 5).shuffleGrouping("peakfinder");
 		

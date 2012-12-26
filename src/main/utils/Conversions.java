@@ -1,73 +1,14 @@
-import java.io.BufferedWriter;
+package main.utils;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.Arrays;
 
 import org.apache.commons.io.FileUtils;
 
 
-public class Utils {
-	public static void writeToFile(String fileName, int index, byte[] content){
-		assert content.length%4 == 0;
-		assert index >= 0;
-		File file = new File(fileName); // Creates the file if not exists
-		System.out.println("-----------CREATED FILE:"+fileName+"----------");
-		try {
-			RandomAccessFile RAF = new RandomAccessFile(file, "rw");
-			RAF.seek(index);
-			RAF.write(content);
-			RAF.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+public class Conversions {
 	
-	public static void writePeaksToFile(String fileName, int peaksOffset, byte[] peaks){
-		assert peaks.length%4 == 0;
-		assert peaksOffset >= 0;
-		int numOfPeaks = peaks.length/4;
 		
-		String peakType;
-		if(fileName.contains("mx")){
-			peakType = "max";
-		}else{
-			peakType = "min";
-		}
-		System.out.println("-----------NUM OF PEAKS:"+numOfPeaks+"---------");
-		File file = new File(fileName);
-		try {
-			FileWriter fw = new FileWriter(file);
-			BufferedWriter out = new BufferedWriter(fw);
-			for(int i = 0; i < numOfPeaks; i++){
-				byte[] b = Arrays.copyOfRange(peaks, 4*i, 4*i+4); 
-				int globalIndex = bytaToInt(b) + peaksOffset;
-				System.out.println("-----------WRITING "+peakType+" PEAK:"+globalIndex+"----------");
-				out.append(Integer.toString(globalIndex));
-				out.append(',');
-			}
-			out.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-	public static float[] readEDAByteFile(File file){	
-		byte[] bArr;
-		try {
-			bArr = FileUtils.readFileToByteArray(file);
-			float[] fArr = toFloatArr(bArr);
-			return fArr;
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
-	}
-	
 	/*
 	 * Converts double to float and places each float as 4-byte sequences in a byte array
 	 * */

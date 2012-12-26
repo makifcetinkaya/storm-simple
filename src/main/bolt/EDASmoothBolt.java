@@ -1,5 +1,11 @@
+package main.bolt;
+
+
 import java.io.File;
 import java.util.Map;
+
+import main.utils.EDAFileReader;
+import main.utils.Conversions;
 
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -36,7 +42,7 @@ public class EDASmoothBolt extends BaseRichBolt{
 			CurveSmooth cs = new CurveSmooth(edaData);
 			double[] smoothedEDA = cs.movingAverage(40);
 			
-			byte[] bArr = Utils.toBytaArr(smoothedEDA);
+			byte[] bArr = Conversions.toBytaArr(smoothedEDA);
 			//int chunkIndex = Integer.parseInt(fileInfo[2]);
 			//System.out.println("---------- SENDING SMOOTHED PART: "+chunkIndex+"-----------");
 			_collector.emit(new Values(metadata, bArr));

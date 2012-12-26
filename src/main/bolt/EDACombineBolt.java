@@ -1,10 +1,11 @@
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
+package main.bolt;
+
+
+
 import java.util.Map;
 
+import main.utils.Conversions;
+import main.utils.EDAFileWriter;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
@@ -39,12 +40,12 @@ public class EDACombineBolt extends BaseRichBolt {
 		int index = chunkIndex*chunkSize;
 		
 		String file = EDA_OUT_DIR+origFileName;
-		Utils.writeToFile(file, index, content);
+		EDAFileWriter.writeToFile(file, index, content);
 		
 		byte[] maxPeaks = input.getBinary(2);
-		Utils.writePeaksToFile(file+"-mxpeaks", index, maxPeaks);
+		EDAFileWriter.writePeaksToFile(file+"-mxpeaks", index, maxPeaks);
 		byte[] minPeaks = input.getBinary(3);
-		Utils.writePeaksToFile(file+"-mnpeaks", index, minPeaks);		
+		EDAFileWriter.writePeaksToFile(file+"-mnpeaks", index, minPeaks);		
 	}
 	
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {

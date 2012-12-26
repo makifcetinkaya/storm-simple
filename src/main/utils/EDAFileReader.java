@@ -1,3 +1,4 @@
+package main.utils;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -5,6 +6,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.text.SimpleDateFormat;
+
+import org.apache.commons.io.FileUtils;
 
 
 public class EDAFileReader {
@@ -88,10 +91,17 @@ public class EDAFileReader {
 		
 	}
 	
-	
-	/*
-	 * Reads a processed EDA file (smoothed and peaks found) into three arrays*/
-	public void readProcFileIntoArray(){
-		
+	public static float[] readEDAByteFile(File file){	
+		byte[] bArr;
+		try {
+			bArr = FileUtils.readFileToByteArray(file);
+			float[] fArr = Conversions.toFloatArr(bArr);
+			return fArr;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
 	}
+	
 }
