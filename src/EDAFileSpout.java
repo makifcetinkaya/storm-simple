@@ -16,9 +16,7 @@ public class EDAFileSpout extends BaseRichSpout{
 		private static final int CHUNK_SIZE = 2000;
 		
 		private ArrayList<String> sentFiles = new ArrayList<String>();
-		public EDAFileSpout(){
-			System.out.println("New FileSpout is created");
-		}
+		
 		public void open(Map conf, TopologyContext context,
 				SpoutOutputCollector collector) {
 			// TODO Auto-generated method stub
@@ -31,13 +29,13 @@ public class EDAFileSpout extends BaseRichSpout{
 			String filename = getUnprocessedFile(EDA_FOLDER);			
 			
 			if(filename != null){
-				System.out.println("------------- EMITTING THE FILE "+filename+" ---------------");
+				//System.out.println("------------- EMITTING THE FILE "+filename+" ---------------");
 				String part = filename.split(".eda_part")[1];
 				String chunkIndex = part.split("of")[0];				
 				String fileInfo = filename+","+CHUNK_SIZE+","+chunkIndex;
 				_collector.emit(new Values(fileInfo));
 			}else{
-				System.out.println("FILESPOUT COULD NOT FIND UNPROCESSED EDA FILE");
+				//System.out.println("FILESPOUT COULD NOT FIND UNPROCESSED EDA FILE");
 			}
 			
 		}

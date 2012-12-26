@@ -13,11 +13,13 @@ public class SimpleTopology {
 		// TODO Auto-generated method stub
 		TopologyBuilder builder = new TopologyBuilder();
 		EDAFileSpout fs = new EDAFileSpout();
-		builder.setSpout("filespout", fs, 2);
+		builder.setSpout("filespout", fs, 1);
 		EDASmoothBolt frb = new EDASmoothBolt();
-		builder.setBolt("filereader", frb ,2).shuffleGrouping("filespout");
+		builder.setBolt("smoother", frb ,5).shuffleGrouping("filespout");
 		PeakFinderBolt pfb = new PeakFinderBolt();
-		builder.setBolt("peakfinder", pfb, 2).shuffleGrouping("filereader");
+		builder.setBolt("peakfinder", pfb, 5).shuffleGrouping("smoother");
+		EDACombineBolt ecb = new EDACombineBolt();
+		builder.setBolt("combiner", ecb, 5).shuffleGrouping("peakfinder");
 		
 		Config conf = new Config();
 		conf.setDebug(false);

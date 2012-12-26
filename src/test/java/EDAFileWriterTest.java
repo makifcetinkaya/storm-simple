@@ -86,15 +86,15 @@ public class EDAFileWriterTest {
 		String fileName = "/home/affective/Downloads/eda-comb";
 		File file = new File(fileName); 
 		
-		for(int i = 0; i < 120; i++){
-			String name = "LOG01_00H3_2011_11_15.eda_part"+Integer.toString(i)+"of119";
-			EDAFileReader efr = new EDAFileReader(name);
-			efr.readFileIntoArray();
-			double[] edaData = efr.getColumnData(5);
-			byte[] bArr = doublatoByta(edaData);			
-			int index = 2000*4*i;			
-			writeToFile(fileName, index, bArr);
-		}
+//		for(int i = 0; i < 120; i++){
+//			String name = "LOG01_00H3_2011_11_15.eda_part"+Integer.toString(i)+"of119";
+//			EDAFileReader efr = new EDAFileReader(name);
+//			efr.readFileIntoArray();
+//			double[] edaData = efr.getColumnData(5);
+//			byte[] bArr = doublatoByta(edaData);			
+//			int index = 2000*4*i;			
+//			writeToFile(fileName, index, bArr);
+//		}
 		
 		float[] vals = readEDAVals(file);
 		int i = 0;

@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Map;
 
 import backtype.storm.task.OutputCollector;
@@ -6,12 +7,13 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
+import backtype.storm.tuple.Values;
 
 
 public class PeakFinderBolt extends BaseRichBolt{
 
 	private OutputCollector _collector;
-	private PeakDetector peakDetector;
+	private PeakDetector1 peakDetector;
 	public void prepare(Map stormConf, TopologyContext context,
 			OutputCollector collector) {
 		// TODO Auto-generated method stub
@@ -24,29 +26,23 @@ public class PeakFinderBolt extends BaseRichBolt{
 	public void execute(Tuple input) {
 		// TODO create peak detector according to sampling rate
 		String metadata = input.getString(0);
+		int chunkIndex = Integer.parseInt(metadata.split(",")[2]);
 		byte[] data = input.getBinary(1);
-		float[] fArr = Utils.toFloatArr(data);
+		float[] vals = Utils.toFloatArr(data);
+		ArrayList[] peaks = PeakDetector.peakDetect(vals, 300, (float)0.1);
+		ArrayList<Integer> maxPeaks = peaks[0];
+		ArrayList<Integer> minPeaks = peaks[1];
 		
-//		peakDetector = new PeakDetector(200, 3); 
-//		ArrayList<Integer> peakIndices = peakDetector.detectPeaks(edaArray);
-//		System.out.println("------PEAK INDICES ARE: "+peakIndices.toString());
-//		
-//		_collector.emit(new Values(metadata, bArr));
+		byte[] maxPeaksByta = Utils.toBytaArr(maxPeaks.toArray(new Integer[0]));
+		byte[] minPeaksByta = Utils.toBytaArr(minPeaks.toArray(new Integer[0]));
+		System.out.println("---------- SENDING PEAKS FOR PART: "+chunkIndex+"-----------");
+		_collector.emit(new Values(metadata, data, maxPeaksByta, minPeaksByta));
 	}
 	
-//	private double[] getEDAArray(String edaString){
-//		String[] strVals = edaString.substring(1, edaString.length()-1).split(",");
-//		double[] edaArray = new double[strVals.length];
-//		for(int i=0; i<strVals.length; i++){
-//			edaArray[i] = Double.parseDouble(strVals[i]);
-//			i++;
-//		}
-//		return edaArray;
-//	}
 
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		// TODO Auto-generated method stub
-		declarer.declare(new Fields("metadata","eda"));
+		declarer.declare(new Fields("metadata","content", "maxPeaks", "minPeaks"));
 	}
 
 }

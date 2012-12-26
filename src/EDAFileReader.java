@@ -1,16 +1,15 @@
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.text.SimpleDateFormat;
 
-import backtype.storm.utils.Utils;
-
 
 public class EDAFileReader {
-	private String filename;
 	private double[][] fileContent;
+	private File file;
 	
 	private static final String S1 = "Start Time:";
 	private static final String S2 = "Sampling Rate:";
@@ -20,8 +19,8 @@ public class EDAFileReader {
 	private static final String DELIMITER = ",";
 	private static final int HEADER_LENGTH = 9;
 	
-	public EDAFileReader(String filename){
-		this.filename = filename;
+	public EDAFileReader(File file){
+		this.file = file;
 	}
 	
 	public double[] getColumnData(int c){
@@ -37,8 +36,8 @@ public class EDAFileReader {
 		FileReader fReader;
 		BufferedReader bReader;
 		LineNumberReader lnr;
-		String file = EDAFileSpout.EDA_FOLDER+"/"+filename;
-		System.out.println("READING FILE INTO ARRAY:"+EDAFileSpout.EDA_FOLDER+"/"+filename);
+		//String file = EDAFileSpout.EDA_FOLDER+"/"+filename;
+		//System.out.println("READING FILE INTO ARRAY:"+EDAFileSpout.EDA_FOLDER+"/"+filename);
 		try {
 			
 			fReader = new FileReader(file);			
@@ -50,7 +49,7 @@ public class EDAFileReader {
 			fileContent = new double[rows][6];
 			lnr.close();
 			
-			System.out.println("Number of rows in file:"+rows);
+			//System.out.println("Number of rows in file:"+rows);
 			FileReader fReader1 = new FileReader(file);
 			bReader = new BufferedReader(fReader1);
 			
@@ -79,17 +78,20 @@ public class EDAFileReader {
 				}
 			}
 			
-			System.out.println("FILE "+EDAFileSpout.EDA_FOLDER+"/"+filename+" READ INTO ARRAY...");
-			System.out.println("ARRAY SIZE is: "+fileContent.length);
-			
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			System.out.println("could not find file:"+filename);
+			System.out.println("could not find file:"+file.toString());
 			e.printStackTrace();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+	}
+	
+	
+	/*
+	 * Reads a processed EDA file (smoothed and peaks found) into three arrays*/
+	public void readProcFileIntoArray(){
 		
 	}
 }

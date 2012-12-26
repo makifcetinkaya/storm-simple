@@ -1,117 +1,76 @@
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 
 
 public class PeakDetector {
-	private int k; // window size
-	private double h; // calibration variable 1<= h <=3
-	private ArrayList<Integer> peakIndices;
-	private double[] potVals;
-	
-	public PeakDetector(int k, double h){
-		this.k = k;
-		this.h = h;
-		this.peakIndices = new ArrayList<Integer>();
-	}
-	
-	public ArrayList<Integer> detectPeaks(double[] data){
-		potVals = new double[data.length];
-		calcPotentials(data);
-		calcPeakIndices();
-		removeKAdjacent(data);
-		return peakIndices;
 
-	}
-	
-	private void calcPeakIndices(){
-		double avg = getAverage(potVals);
-		double stdev = getStdDev(potVals);		
-		for(int i = 0; i < potVals.length; i++){
-			double diff = potVals[i] - avg;
-			if(potVals[i] > 0 && diff > h*stdev ){
-				peakIndices.add(i);
-			}
-		}
-		Collections.sort(peakIndices);
-	}
-	
-	private void removeKAdjacent(double[] data){
-		System.out.println("removing adjacent peaks");
-		int i = 0;
-		while(i  < peakIndices.size() - 1){
-			int curr = peakIndices.get(i);
-			int next = peakIndices.get(i+1);
-			int indexDiff = Math.abs(next- curr);
+	public static ArrayList[] peakDetect(float[] vals, int lookAhead, float delta){
+		ArrayList<Integer> maxPeaks = new ArrayList<Integer>();
+		ArrayList<Integer> minPeaks = new ArrayList<Integer>();
+		int dump = -1;		
+		float mn = Float.MAX_VALUE;
+		float mx = Float.MIN_VALUE;
+		float[] valsAhead;
+		int length = vals.length;
+		
+		assert lookAhead > 0;
+		assert length - lookAhead > 0;
+		
+		for(int i = 0; i<length-lookAhead; i++){
+			//System.out.println("i is:"+i);
+			float y = vals[i];
+			if (y > mx){ mx = y; }
+			if (y < mn){ mn = y; }
 			
-			if(indexDiff < k){
-				if(data[curr] > data[next]){
-					peakIndices.remove(i+1);
-				}else{
-					peakIndices.remove(i);
+			// Look for a maximum
+			if (y < mx-delta  && mx != Float.MAX_VALUE){
+				valsAhead = Arrays.copyOfRange(vals, i+1, i+1+lookAhead);
+				float maxAhead = getMax(valsAhead);
+				if (maxAhead < mx ){ 
+					//System.out.println("max val:"+vals[i]);
+					maxPeaks.add(i);
+					if(dump == -1){ dump = 1;}
+					mx = Float.MAX_VALUE;
+					mn = Float.MAX_VALUE;
+					if (i+lookAhead >= length){ break; }
+					continue;
 				}
-			}else{
-				i++;
+			}
+			
+			// Look for a minimum
+			if (y > mn+delta && mn != Float.MIN_VALUE){
+				valsAhead = Arrays.copyOfRange(vals, i+1, i+1+lookAhead); 
+				float minAhead = getMin(valsAhead);
+				if (minAhead > mn ){
+					//System.out.println("min val:"+vals[i]);
+					minPeaks.add(i);
+					if(dump == -1){ dump = 2;}
+					mn = Float.MIN_VALUE;
+					mx = Float.MIN_VALUE;
+					if (i+lookAhead >= length){ break;	}
+					continue;
+				}
 			}
 		}
+		if (dump == 1){ maxPeaks.remove(0); }
+		if (dump == 2){ minPeaks.remove(0); }
+		
+		return new ArrayList[]{maxPeaks, minPeaks};
 	}
 	
-	/*
-	 * Calculates the peak function of MAX at each point.
-	 * */
-	public void calcPotentials(double[] data){
-		for(int i = k; i < data.length-k ; i++){
-			potVals[i] = calculateS1(Arrays.copyOfRange(data, i-k, i+k+1)); 
-		}
-	}
- 
-	/*
-	 * Calculates the peak function of MAX at one point
-	 * */
-	public double calculateS1(double[] data_i){
-		double[] leftDiff = new double[k];
-		double[] rightDiff = new double[k];
-		assert data_i.length == 2*k+1;
-		for(int j = 0; j < k ; j++){
-			leftDiff[j] = data_i[k] - data_i[j];
-		}
-		for(int j = k+1; j < 2*k+1 ; j++){
-			rightDiff[j-k-1] = data_i[k] - data_i[j];
-		}
-		
-		double leftMax = getMax(leftDiff);
-		double rightMax = getMax(rightDiff);
-		
-		return (leftMax + rightMax)/2;
-		
-	}
-	public double getMax(double[] arr){
-		double max = arr[0];
+	private static  float getMax(float[] arr){
+		float max = arr[0];
 		for(int i = 0; i < arr.length; i++){
-			if (arr[i] > max){
-				max = arr[i];
-			}
+			if (arr[i] > max){ max = arr[i]; }
 		}
 		return max;
 	}
 	
-	// TODO calculate sigma and mu for + values
-	public double getAverage(double[] data){
-		
-		double sum = 0;
-		for(int i = 0; i < data.length; i++){
-			sum = sum + data[i];
+	private static float getMin(float[] arr){
+		float min = arr[0];
+		for(int i = 0; i < arr.length; i++){
+			if (arr[i] < min){ min = arr[i]; }
 		}
-		return sum/data.length;
+		return min;
 	}
-	public double getStdDev(double[] data){
-		double avg = getAverage(data);
-		double sum = 0;
-		for(int i = 0; i < data.length; i++){
-			sum = sum + (data[i] - avg)*(data[i] - avg);
-		}
-		double stdev = Math.sqrt(sum/data.length);
-		return stdev;
-	}
-	
 }
