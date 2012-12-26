@@ -33,7 +33,7 @@ public class EDAPeakFinderBolt extends BaseRichBolt{
 		int chunkIndex = Integer.parseInt(metadata.split(",")[2]);
 		byte[] data = input.getBinary(1);
 		float[] vals = Conversions.toFloatArr(data);
-		ArrayList[] peaks = PeakDetector.peakDetect(vals, 300, (float)0.1);
+		ArrayList[] peaks = PeakDetector.peakDetect(vals, 300, 0);
 		ArrayList<Integer> maxPeaks = peaks[0];
 		ArrayList<Integer> minPeaks = peaks[1];
 		

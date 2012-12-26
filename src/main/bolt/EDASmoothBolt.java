@@ -44,7 +44,7 @@ public class EDASmoothBolt extends BaseRichBolt{
 			
 			byte[] bArr = Conversions.toBytaArr(smoothedEDA);
 			//int chunkIndex = Integer.parseInt(fileInfo[2]);
-			//System.out.println("---------- SENDING SMOOTHED PART: "+chunkIndex+"-----------");
+			System.out.println("---------- SENDING SMOOTHED PART: "+fileInfo[2]+"-----------");
 			_collector.emit(new Values(metadata, bArr));
 		}
 

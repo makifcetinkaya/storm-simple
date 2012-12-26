@@ -27,16 +27,21 @@ public class EDAFileSpout extends BaseRichSpout{
 		public void nextTuple() {
 			// TODO Auto-generated method stub
 			Utils.sleep(5);
-			String filename = getUnprocessedFile(EDA_FOLDER);			
-			
+			String filename = getUnprocessedFile(EDA_FOLDER);	
 			if(filename != null){
 				//System.out.println("------------- EMITTING THE FILE "+filename+" ---------------");
 				String part = filename.split(".eda_part")[1];
 				String chunkIndex = part.split("of")[0];				
-				String fileInfo = filename+","+CHUNK_SIZE+","+chunkIndex;
+				String fileInfo = EDA_FOLDER+"/"+filename+","+CHUNK_SIZE+","+chunkIndex;
 				_collector.emit(new Values(fileInfo));
 			}else{
-				//System.out.println("FILESPOUT COULD NOT FIND UNPROCESSED EDA FILE");
+				System.out.println("FILESPOUT COULD NOT FIND UNPROCESSED EDA FILE");
+				try {
+					Thread.sleep(10000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 			
 		}

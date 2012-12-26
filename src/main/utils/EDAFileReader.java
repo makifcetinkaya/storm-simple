@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.io.LineNumberReader;
 import java.text.SimpleDateFormat;
 
+import main.spout.EDAFileSpout;
+
 import org.apache.commons.io.FileUtils;
 
 
@@ -40,12 +42,13 @@ public class EDAFileReader {
 		BufferedReader bReader;
 		LineNumberReader lnr;
 		//String file = EDAFileSpout.EDA_FOLDER+"/"+filename;
-		//System.out.println("READING FILE INTO ARRAY:"+EDAFileSpout.EDA_FOLDER+"/"+filename);
+		System.out.println("---------READING FILE INTO ARRAY:"+file);
 		try {
 			
 			fReader = new FileReader(file);			
 			bReader = new BufferedReader(fReader);					
 			lnr = new LineNumberReader(fReader);
+			//System.out.println("------FOUND FILE:"+file);
 			
 			lnr.skip(Integer.MAX_VALUE);
 			int rows = lnr.getLineNumber() - HEADER_LENGTH; 
@@ -69,7 +72,7 @@ public class EDAFileReader {
 					// get sampling rate
 					//System.out.println("sampling rate line");
 				}else if(line.contains(DATA_LINE_SEP)){
-					//System.out.println("Data lines reached");
+					//System.out.println("--------------Data lines reached--------------");
 					dataLine = true;
 				}else if(dataLine){
 					int i = 0;
@@ -80,14 +83,21 @@ public class EDAFileReader {
 					dataRow++;						
 				}
 			}
+			try {
+				bReader.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			
 		} catch (FileNotFoundException e) {
-			System.out.println("could not find file:"+file.toString());
+			System.out.println("------FILE NOT FOUND:"+file);
 			e.printStackTrace();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
 		
 	}
 	

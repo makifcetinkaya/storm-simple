@@ -15,7 +15,7 @@ import backtype.storm.tuple.Tuple;
 
 public class EDACombineBolt extends BaseRichBolt {
 
-	public static final String EDA_OUT_DIR = "/home/affective/Downloads/slices/";
+	//public static final String EDA_OUT_DIR = "/home/affective/Downloads/slices/";
 	private OutputCollector _collector;
 	// private EDAFileWriter edaFileWriter;
 	public void prepare(Map stormConf, TopologyContext context,
@@ -39,13 +39,13 @@ public class EDACombineBolt extends BaseRichBolt {
 		byte[] content = input.getBinary(1);		
 		int index = chunkIndex*chunkSize;
 		
-		String file = EDA_OUT_DIR+origFileName;
-		EDAFileWriter.writeToFile(file, index, content);
+		String filename = origFileName;
+		EDAFileWriter.writeToFile(filename, index, content);
 		
 		byte[] maxPeaks = input.getBinary(2);
-		EDAFileWriter.writePeaksToFile(file+"-mxpeaks", index, maxPeaks);
+		EDAFileWriter.writePeaksToFile(filename+"-mxpeaks", index, maxPeaks);
 		byte[] minPeaks = input.getBinary(3);
-		EDAFileWriter.writePeaksToFile(file+"-mnpeaks", index, minPeaks);		
+		EDAFileWriter.writePeaksToFile(filename+"-mnpeaks", index, minPeaks);		
 	}
 	
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
