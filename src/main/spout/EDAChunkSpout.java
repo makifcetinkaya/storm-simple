@@ -3,6 +3,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
 
+import main.utils.Conversions;
+import main.utils.EDAFileReader;
 import backtype.storm.spout.SpoutOutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
@@ -11,7 +13,7 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
 
-public class EDAFileSpout extends BaseRichSpout{
+public class EDAChunkSpout extends BaseRichSpout{
 		private SpoutOutputCollector _collector;
 		public static final File EDA_FOLDER = new File("/home/affective/Downloads/slices");
 		private static final int CHUNK_SIZE = 2000;
@@ -26,14 +28,18 @@ public class EDAFileSpout extends BaseRichSpout{
 
 		public void nextTuple() {
 			// TODO Auto-generated method stub
-			Utils.sleep(5);
-			String filename = getUnprocessedFile(EDA_FOLDER);	
-			if(filename != null){
+			String fileName = getUnprocessedFile(EDA_FOLDER);	
+			if(fileName != null){
 				//System.out.println("------------- EMITTING THE FILE "+filename+" ---------------");
-				String part = filename.split(".eda_part")[1];
+				String part = fileName.split(".eda_part")[1];
 				String chunkIndex = part.split("of")[0];				
-				String fileInfo = EDA_FOLDER+"/"+filename+","+CHUNK_SIZE+","+chunkIndex;
-				_collector.emit(new Values(fileInfo));
+				String metadata = EDA_FOLDER+"/"+fileName+","+CHUNK_SIZE+","+chunkIndex;
+				File file = new File(EDA_FOLDER+"/"+fileName);				
+				EDAFileReader efr = new EDAFileReader(file);
+				efr.readFileIntoArray();
+				float[] fArr = efr.getColumnData(5);
+				byte[] eda = Conversions.toBytaArr(fArr);
+				_collector.emit(new Values(metadata, eda));
 			}else{
 				System.out.println("FILESPOUT COULD NOT FIND UNPROCESSED EDA FILE");
 				try {
@@ -57,7 +63,7 @@ public class EDAFileSpout extends BaseRichSpout{
 		}
 		public void declareOutputFields(OutputFieldsDeclarer declarer) {
 			// TODO Auto-generated method stub
-			declarer.declare(new Fields("fileInfo"));
+			declarer.declare(new Fields("metadata", "eda"));
 		}
 
 		

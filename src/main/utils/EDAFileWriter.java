@@ -12,10 +12,11 @@ public class EDAFileWriter {
 		assert content.length%4 == 0;
 		assert index >= 0;
 		File file = new File(fileName); // Creates the file if not exists
-		System.out.println("-----------CREATED FILE:"+fileName+"----------");
+		//System.out.println("-----------CREATED FILE:"+fileName+"----------");
 		try {
 			RandomAccessFile RAF = new RandomAccessFile(file, "rw");
 			RAF.seek(index);
+			//if(index>800000){ System.out.println("-------WRITING AT INDEX:"+index); }
 			RAF.write(content);
 			RAF.close();
 		} catch (IOException e) {
@@ -29,21 +30,21 @@ public class EDAFileWriter {
 		assert peaksOffset >= 0;
 		int numOfPeaks = peaks.length/4;
 		
-		String peakType;
-		if(fileName.contains("mx")){
-			peakType = "max";
-		}else{
-			peakType = "min";
-		}
-		System.out.println("-----------NUM OF PEAKS:"+numOfPeaks+"---------");
+//		String peakType;
+//		if(fileName.contains("mx")){
+//			peakType = "max";
+//		}else{
+//			peakType = "min";
+//		}
+		//System.out.println("-----------NUM OF PEAKS:"+numOfPeaks+"---------");
 		File file = new File(fileName);
 		try {
-			FileWriter fw = new FileWriter(file);
+			FileWriter fw = new FileWriter(file,true);
 			BufferedWriter out = new BufferedWriter(fw);
 			for(int i = 0; i < numOfPeaks; i++){
 				byte[] b = Arrays.copyOfRange(peaks, 4*i, 4*i+4); 
 				int globalIndex = Conversions.bytaToInt(b) + peaksOffset;
-				System.out.println("-----------WRITING "+peakType+" PEAK:"+globalIndex+"----------");
+				//System.out.println("-----------WRITING "+peakType+" PEAK:"+globalIndex+"----------");
 				out.append(Integer.toString(globalIndex));
 				out.append(',');
 			}

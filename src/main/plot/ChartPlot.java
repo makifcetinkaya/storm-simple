@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Shape;
-import java.awt.Stroke;
 import java.text.NumberFormat;
 
 import javax.swing.JFrame;
@@ -23,9 +22,15 @@ import org.jfree.util.ShapeUtilities;
 
 public class ChartPlot extends JFrame {
     
-	private double[][] data;
+//	private double[][] data;
+//	private double[][] mxSeries;
+//	private double[][] mnSeries;
 
-    /**
+	private final BasicStroke stroke = new BasicStroke(.1f);
+	//private final BasicStroke peakStroke = new BasicStroke(3f,BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
+	private final Shape edaShape = ShapeUtilities.createDiagonalCross(.01f, .01f);
+	private final Shape peakShape = ShapeUtilities.createDiamond(2f);
+	/**
      * Construct a new frame 
      *
      * @param title the frame title
@@ -33,7 +38,7 @@ public class ChartPlot extends JFrame {
     public ChartPlot(String title, double[][] data) {
         super(title);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.data = data;
+        //this.data = data;
         final DefaultXYDataset dataset = new DefaultXYDataset();
         dataset.addSeries("data", data);
         JFreeChart chart = createChart(dataset);
@@ -41,7 +46,22 @@ public class ChartPlot extends JFrame {
         chartPanel.setPreferredSize(new Dimension(1000, 480));
         this.add(chartPanel, BorderLayout.CENTER);
     }
+    
+    public ChartPlot(String title, double[][] data, double[][] data1, double[][] data2) {
+        super(title);
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        //this.data = data;
+        final DefaultXYDataset dataset = new DefaultXYDataset();
+        dataset.addSeries("data", data);
+        dataset.addSeries("data1", data1);
+        dataset.addSeries("data2", data2);
+        JFreeChart chart = createChart(dataset);
+        ChartPanel chartPanel = new ChartPanel(chart, false);
+        chartPanel.setPreferredSize(new Dimension(2000, 480));
+        this.add(chartPanel, BorderLayout.CENTER);
+    }
 
+    
 
     /**
      * Create a chart.
@@ -82,19 +102,23 @@ public class ChartPlot extends JFrame {
 
         // render shapes and lines
         XYLineAndShapeRenderer renderer =
-            new XYLineAndShapeRenderer(true, true);
+            new XYLineAndShapeRenderer(false, true);
         plot.setRenderer(renderer);
         renderer.setBaseShapesVisible(true);
         renderer.setBaseShapesFilled(true);
 
         // set the renderer's stroke
-        Stroke stroke = new BasicStroke(.1f);
         renderer.setBaseOutlineStroke(stroke);
 
         // Set data point size
-        Shape cross = ShapeUtilities.createDiagonalCross(.01f, .01f);
+        
+        
         plot = (XYPlot) chart.getPlot();
-        renderer.setSeriesShape(0, cross);
+        renderer.setSeriesShape(0, edaShape);
+        renderer.setSeriesShape(1, peakShape);
+        renderer.setSeriesShape(2, peakShape);
+        
+        
         
         // label the points
         NumberFormat format = NumberFormat.getNumberInstance();

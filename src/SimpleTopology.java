@@ -1,7 +1,7 @@
 import main.bolt.EDACombineBolt;
 import main.bolt.EDASmoothBolt;
 import main.bolt.EDAPeakFinderBolt;
-import main.spout.EDAFileSpout;
+import main.spout.EDAChunkSpout;
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
 import backtype.storm.topology.TopologyBuilder;
@@ -16,7 +16,7 @@ public class SimpleTopology {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		TopologyBuilder builder = new TopologyBuilder();
-		EDAFileSpout fs = new EDAFileSpout();
+		EDAChunkSpout fs = new EDAChunkSpout();
 		builder.setSpout("filespout", fs, 1);
 		EDASmoothBolt esb = new EDASmoothBolt();
 		builder.setBolt("smoother", esb ,5).shuffleGrouping("filespout");
@@ -30,7 +30,7 @@ public class SimpleTopology {
 		
 		LocalCluster cluster = new LocalCluster();
 		cluster.submitTopology("test", conf, builder.createTopology());
-		Utils.sleep(10000);
+		Utils.sleep(12000);
 		cluster.killTopology("test");
 		cluster.shutdown();
 		

@@ -7,13 +7,13 @@ import java.io.IOException;
 import java.io.LineNumberReader;
 import java.text.SimpleDateFormat;
 
-import main.spout.EDAFileSpout;
+import main.spout.EDAChunkSpout;
 
 import org.apache.commons.io.FileUtils;
 
 
 public class EDAFileReader {
-	private double[][] fileContent;
+	private float[][] fileContent;
 	private File file;
 	
 	private static final String S1 = "Start Time:";
@@ -28,9 +28,9 @@ public class EDAFileReader {
 		this.file = file;
 	}
 	
-	public double[] getColumnData(int c){
+	public float[] getColumnData(int c){
 		int rows = fileContent.length;
-		double[] colData = new double[rows];
+		float[] colData = new float[rows];
 		for(int i = 0; i < rows; i++){
 			colData[i] = fileContent[i][c];
 		}
@@ -42,7 +42,7 @@ public class EDAFileReader {
 		BufferedReader bReader;
 		LineNumberReader lnr;
 		//String file = EDAFileSpout.EDA_FOLDER+"/"+filename;
-		System.out.println("---------READING FILE INTO ARRAY:"+file);
+		//System.out.println("---------READING FILE INTO ARRAY:"+file);
 		try {
 			
 			fReader = new FileReader(file);			
@@ -52,7 +52,8 @@ public class EDAFileReader {
 			
 			lnr.skip(Integer.MAX_VALUE);
 			int rows = lnr.getLineNumber() - HEADER_LENGTH; 
-			fileContent = new double[rows][6];
+			
+			fileContent = new float[rows][6];
 			lnr.close();
 			
 			//System.out.println("Number of rows in file:"+rows);
@@ -77,7 +78,7 @@ public class EDAFileReader {
 				}else if(dataLine){
 					int i = 0;
 					for(String s:line.split(DELIMITER)){
-						fileContent[dataRow][i] = Double.parseDouble(s); 
+						fileContent[dataRow][i] = Float.parseFloat(s); 
 						i++;
 					}
 					dataRow++;						
@@ -101,6 +102,18 @@ public class EDAFileReader {
 		
 	}
 	
+	public static int[] readEDAPeaksFile(File file){
+		try {
+			String content = FileUtils.readFileToString(file);
+			String[] vals = content.split(",");
+			int[] peaks = Conversions.strArrToIntArr(vals);
+			return peaks;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
 	public static float[] readEDAByteFile(File file){	
 		byte[] bArr;
 		try {

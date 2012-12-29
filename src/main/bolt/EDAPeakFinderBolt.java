@@ -39,7 +39,7 @@ public class EDAPeakFinderBolt extends BaseRichBolt{
 		
 		byte[] maxPeaksByta = Conversions.toBytaArr(maxPeaks.toArray(new Integer[0]));
 		byte[] minPeaksByta = Conversions.toBytaArr(minPeaks.toArray(new Integer[0]));
-		System.out.println("---------- SENDING PEAKS FOR PART: "+chunkIndex+"-----------");
+		//System.out.println("---------- SENDING PEAKS FOR PART: "+chunkIndex+"-----------");
 		_collector.emit(new Values(metadata, data, maxPeaksByta, minPeaksByta));
 	}
 	

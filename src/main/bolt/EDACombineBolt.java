@@ -34,18 +34,19 @@ public class EDACombineBolt extends BaseRichBolt {
 		String origFileName = fileName.split("_part")[0];
 		int chunkSize = Integer.parseInt(fileInfo[1]);	
 		int chunkIndex = Integer.parseInt(fileInfo[2]);
-		System.out.println("---------- WRITING CHUNK INDEX: "+chunkIndex+"-----------");
+		//System.out.println("---------- WRITING CHUNK INDEX: "+chunkIndex+"-----------");
 		
 		byte[] content = input.getBinary(1);		
-		int index = chunkIndex*chunkSize;
+		int byteIndex = chunkIndex*chunkSize*4;
+		int dataIndex = chunkIndex*chunkSize;
 		
 		String filename = origFileName;
-		EDAFileWriter.writeToFile(filename, index, content);
+		EDAFileWriter.writeToFile(filename, byteIndex, content);
 		
 		byte[] maxPeaks = input.getBinary(2);
-		EDAFileWriter.writePeaksToFile(filename+"-mxpeaks", index, maxPeaks);
+		EDAFileWriter.writePeaksToFile(filename+"-mxpeaks", dataIndex, maxPeaks);
 		byte[] minPeaks = input.getBinary(3);
-		EDAFileWriter.writePeaksToFile(filename+"-mnpeaks", index, minPeaks);		
+		EDAFileWriter.writePeaksToFile(filename+"-mnpeaks", dataIndex, minPeaks);		
 	}
 	
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {

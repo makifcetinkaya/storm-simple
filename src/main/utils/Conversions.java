@@ -1,9 +1,5 @@
 package main.utils;
-import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
-
-import org.apache.commons.io.FileUtils;
 
 
 public class Conversions {
@@ -92,5 +88,15 @@ public class Conversions {
 		int asInt = (byta[3] & 0xFF) | ((byta[2] & 0xFF) << 8) | 
 				((byta[1] & 0xFF) << 16) | ((byta[0] & 0xFF) << 24);
 		return asInt;
+	}
+	
+	public static int[] strArrToIntArr(String[] vals){
+		int[] res = new int[vals.length];
+		String s;
+		for(int i = 0; i < vals.length; i++){
+			s = vals[i];
+			res[i] = Integer.parseInt(s);			
+		}
+		return res;
 	}
 }

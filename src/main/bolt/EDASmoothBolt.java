@@ -31,20 +31,15 @@ public class EDASmoothBolt extends BaseRichBolt{
 		 * */
 		public void execute(Tuple input) {
 			String metadata = input.getString(0);
-			String[] fileInfo = metadata.split(",");
-			String fileName = fileInfo[0];
-			File file = new File(fileName);
-						
-			efr = new EDAFileReader(file);
-			efr.readFileIntoArray();
-			double[] edaData = efr.getColumnData(5);
+			byte[] data = input.getBinary(1);
+			float[] fArr = Conversions.toFloatArr(data);
+			double[] eda = Conversions.toDoubla(fArr);
 			
-			CurveSmooth cs = new CurveSmooth(edaData);
-			double[] smoothedEDA = cs.movingAverage(40);
-			
-			byte[] bArr = Conversions.toBytaArr(smoothedEDA);
+			CurveSmooth cs = new CurveSmooth(eda);
+			double[] smoothEDA = cs.movingAverage(40);			
+			byte[] bArr = Conversions.toBytaArr(smoothEDA);
 			//int chunkIndex = Integer.parseInt(fileInfo[2]);
-			System.out.println("---------- SENDING SMOOTHED PART: "+fileInfo[2]+"-----------");
+			//System.out.println("---------- SENDING SMOOTHED PART: "+fileInfo[2]+"-----------");
 			_collector.emit(new Values(metadata, bArr));
 		}
 
