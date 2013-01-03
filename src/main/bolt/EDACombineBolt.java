@@ -4,7 +4,9 @@ package main.bolt;
 
 import java.util.Map;
 
-import main.utils.Conversions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import main.utils.EDAFileWriter;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -15,8 +17,9 @@ import backtype.storm.tuple.Tuple;
 
 public class EDACombineBolt extends BaseRichBolt {
 
-	//public static final String EDA_OUT_DIR = "/home/affective/Downloads/slices/";
+	public static final String EDA_OUT_DIR = "/home/slices/output/";
 	private OutputCollector _collector;
+	Logger _logger = LoggerFactory.getLogger(EDACombineBolt.class);
 	// private EDAFileWriter edaFileWriter;
 	public void prepare(Map stormConf, TopologyContext context,
 			OutputCollector collector) {
@@ -34,19 +37,21 @@ public class EDACombineBolt extends BaseRichBolt {
 		String origFileName = fileName.split("_part")[0];
 		int chunkSize = Integer.parseInt(fileInfo[1]);	
 		int chunkIndex = Integer.parseInt(fileInfo[2]);
-		//System.out.println("---------- WRITING CHUNK INDEX: "+chunkIndex+"-----------");
+		_logger.info("---------- WRITING CHUNK INDEX: "+chunkIndex+"-----------");
 		
 		byte[] content = input.getBinary(1);		
 		int byteIndex = chunkIndex*chunkSize*4;
 		int dataIndex = chunkIndex*chunkSize;
 		
-		String filename = origFileName;
-		EDAFileWriter.writeToFile(filename, byteIndex, content);
+		//String filename = origFileName;
 		
+		EDAFileWriter.writeToFile(EDA_OUT_DIR+fileName, byteIndex, content);
+		
+		//String peakFile = fileName.split(".eda")[0];
 		byte[] maxPeaks = input.getBinary(2);
-		EDAFileWriter.writePeaksToFile(filename+"-mxpeaks", dataIndex, maxPeaks);
+		EDAFileWriter.writePeaksToFile(EDA_OUT_DIR+origFileName+"-mxpeaks", dataIndex, maxPeaks);
 		byte[] minPeaks = input.getBinary(3);
-		EDAFileWriter.writePeaksToFile(filename+"-mnpeaks", dataIndex, minPeaks);		
+		EDAFileWriter.writePeaksToFile(EDA_OUT_DIR+origFileName+"-mnpeaks", dataIndex, minPeaks);		
 	}
 	
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {

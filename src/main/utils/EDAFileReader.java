@@ -42,7 +42,7 @@ public class EDAFileReader {
 		BufferedReader bReader;
 		LineNumberReader lnr;
 		//String file = EDAFileSpout.EDA_FOLDER+"/"+filename;
-		//System.out.println("---------READING FILE INTO ARRAY:"+file);
+		System.out.println("---------READING FILE INTO ARRAY:"+file);
 		try {
 			
 			fReader = new FileReader(file);			

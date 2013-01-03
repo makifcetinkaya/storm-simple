@@ -1,12 +1,14 @@
 package main.bolt;
 
 
-import java.io.File;
 import java.util.Map;
 
-import main.utils.EDAFileReader;
-import main.utils.Conversions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import main.spout.EDAChunkSpout;
+import main.utils.Conversions;
+import main.utils.EDAFileReader;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
@@ -19,6 +21,7 @@ import flanagan.analysis.CurveSmooth;
 public class EDASmoothBolt extends BaseRichBolt{
 		private OutputCollector _collector;
 		private EDAFileReader efr;
+		Logger _logger = LoggerFactory.getLogger(EDASmoothBolt.class);
 		
 		public void prepare(Map stormConf, TopologyContext context,
 				OutputCollector collector) {
@@ -39,7 +42,7 @@ public class EDASmoothBolt extends BaseRichBolt{
 			double[] smoothEDA = cs.movingAverage(40);			
 			byte[] bArr = Conversions.toBytaArr(smoothEDA);
 			//int chunkIndex = Integer.parseInt(fileInfo[2]);
-			//System.out.println("---------- SENDING SMOOTHED PART: "+fileInfo[2]+"-----------");
+			//_logger.info("---------- SENDING SMOOTHED PART-----------");
 			_collector.emit(new Values(metadata, bArr));
 		}
 

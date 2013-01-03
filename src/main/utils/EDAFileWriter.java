@@ -12,7 +12,7 @@ public class EDAFileWriter {
 		assert content.length%4 == 0;
 		assert index >= 0;
 		File file = new File(fileName); // Creates the file if not exists
-		//System.out.println("-----------CREATED FILE:"+fileName+"----------");
+		System.out.println("-----------CREATED FILE:"+fileName+"----------");
 		try {
 			RandomAccessFile RAF = new RandomAccessFile(file, "rw");
 			RAF.seek(index);
