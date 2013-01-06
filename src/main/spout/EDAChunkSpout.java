@@ -1,93 +1,132 @@
 package main.spout;
-import java.io.File;
-import java.util.ArrayList;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.util.Arrays;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import main.utils.Conversions;
-import main.utils.EDAFileReader;
 
-import org.apache.thrift7.TException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import backtype.storm.generated.NotAliveException;
 import backtype.storm.spout.SpoutOutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichSpout;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
-import backtype.storm.utils.NimbusClient;
 
 public class EDAChunkSpout extends BaseRichSpout{
+		
+		public static final int PORT = 6789;
+		public static final int TIMEOUT = 20;
+		private static final int MAGIC_NUM = 239155;
+		public static final int NAME_LEN = 50;
+		private static final int HEADER_SIZE = 4;
+		private static final int META_SIZE = 2*NAME_LEN + 12;
+		private static final int DATA_SIZE = 8000;
+		private static final int CHUNK_SIZE = DATA_SIZE + META_SIZE + HEADER_SIZE;
+		
+		private boolean _transmitting;
+		private DataInputStream _dataInputStream;	
 		private SpoutOutputCollector _collector;
 		private Map _conf;
-		public static final String EDA_INP_DIR = "/home/slices/input/";
-		private static final int CHUNK_SIZE = 2000;		
-		private ArrayList<String> sentFiles = new ArrayList<String>();		
-		Logger _logger = LoggerFactory.getLogger(EDAChunkSpout.class);
+		private Socket _connSocket;
+		private ServerSocket _serverSocket;
+
+		public static Logger _logger = Logger.getLogger(EDAChunkSpout.class);
+//		Logger _logger = LoggerFactory.getLogger(EDAChunkSpout.class);
 		
 		public void open(Map conf, TopologyContext context,
 				SpoutOutputCollector collector) {
 			// TODO Auto-generated method stub
 			_collector = collector;
 			_conf = conf;
-			//_logger.info("CREATED EDA CHUNK SPOUT...");
-			
+			_transmitting = false;
+			try {
+				_serverSocket = new ServerSocket(PORT);
+				_serverSocket.setSoTimeout(TIMEOUT);
+				System.out.println("EDAChunkSpout CREATED server socket...");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				System.out.println("EDAChunkSpout could not create server socket...");
+				e.printStackTrace();
+				//Thread.currentThread().interrupt();
+			}
+						
 		}
 
 		public void nextTuple() {
 			// TODO Auto-generated method stub
-			String fileName = getUnprocessedFile(EDA_INP_DIR);	
-			if(fileName != null){
-				System.out.println("------------- READING FILE "+fileName+" ---------------");
-				String part = fileName.split(".eda_part")[1];
-				String chunkIndex = part.split("of")[0];				
-				String metadata = fileName+","+CHUNK_SIZE+","+chunkIndex;
-				File file = new File(EDA_INP_DIR+fileName);				
-				EDAFileReader efr = new EDAFileReader(file);
-				efr.readFileIntoArray();
-				float[] fArr = efr.getColumnData(5);
-				byte[] eda = Conversions.toBytaArr(fArr);
-				_collector.emit(new Values(metadata, eda));
-			}else{
-				
-				
-				//System.out.println("FILESPOUT COULD NOT FIND UNPROCESSED EDA FILE");
-				NimbusClient client = NimbusClient.getConfiguredClient(_conf);
+			if (!_transmitting){
 				try {
-					_logger.info("NO UNPROCESSED EDA CHUNK, killing topology...");
-					client.getClient().killTopology("simple");
-				} catch (NotAliveException e) {
-					// TODO Auto-generated catch block
+					_connSocket = _serverSocket.accept();
+					_dataInputStream = new DataInputStream(_connSocket.getInputStream());
+					_transmitting = true;
+					if((System.currentTimeMillis()/1000) % 10 == 0 ){
+						_logger.info("EDAChunkSpout at "+ InetAddress.getLocalHost().getHostName()+
+								" waiting for incoming TCP connections...");
+						// _logger.info("EDAChunkSpout at "+InetAddress.getLocalHost().getHostName()+
+		        		//	   "received metadata: "+metastr);
+					}
+				} catch (SocketTimeoutException e){
+					//TODO e.printStackTrace();
+				} catch (IOException e) {
 					e.printStackTrace();
-				} catch (TException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				//client.close();
-//				try {
-//					Thread.sleep(10000);
-//				} catch (InterruptedException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
+				} 
+			}else{
+	           try{
+		           if(_dataInputStream.available() >= CHUNK_SIZE){
+		        	   byte[] header = new byte[HEADER_SIZE];
+		        	   _dataInputStream.read(header);
+		        	   
+		        	   if (isCorrHeader(header)){
+			        	   byte[] metadata = new byte[META_SIZE];
+			        	   _dataInputStream.read(metadata);
+			        	   String metastr = metaArrToStr(metadata);			        	  
+			        	   byte[] data = new byte[DATA_SIZE];
+			        	   _dataInputStream.read(data);
+			        	   _collector.emit(new Values(metastr, data));
+		        	   }
+		           }
+	           }catch(IOException e){
+	        	   _transmitting = false;
+	        	   try {
+	        		   _dataInputStream.close();
+				   } catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+				   }
+	        	   e.printStackTrace();
+	           }
 			}
 			
+			
 		}
-		
-		private String getUnprocessedFile(String dir){
-			File folder = new File(dir);
-			if(folder.list() == null){
-				_logger.info("-------Problem reading files in input dir...");
+
+		private static boolean isCorrHeader(byte[] byta){
+			int num = Conversions.bytaToInt(byta);
+			if (num == MAGIC_NUM){
+				return true;
+			}else{
+				return false;
 			}
-			for(String file:folder.list()){
-				if (file.contains("eda_part") && ! sentFiles.contains(file)){
-					sentFiles.add(file);
-					return file;
-				}
-			}
-			return null;
+		}
+		public static String metaArrToStr(byte[] bArr){
+			byte[] fName = Arrays.copyOfRange(bArr, 0, NAME_LEN*2);
+			String fileName = Conversions.bytaToUTF(fName);
+			byte[] cSize = Arrays.copyOfRange(bArr, NAME_LEN*2, NAME_LEN*2+4);
+			int chunkSize = Conversions.bytaToInt(cSize);
+			byte[] cIndex = Arrays.copyOfRange(bArr, NAME_LEN*2+4, NAME_LEN*2+8);
+			int chunkIndex = Conversions.bytaToInt(cIndex);
+			byte[] nOfChunks = Arrays.copyOfRange(bArr, NAME_LEN*2+8, NAME_LEN*2+12);
+			int numOfChunks = Conversions.bytaToInt(nOfChunks);
+			
+			return fileName+","+chunkSize+","+chunkIndex+","+numOfChunks;
 		}
 		public void declareOutputFields(OutputFieldsDeclarer declarer) {
 			// TODO Auto-generated method stub

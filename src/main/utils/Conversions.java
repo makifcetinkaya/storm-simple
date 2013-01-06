@@ -1,4 +1,5 @@
 package main.utils;
+
 import java.util.Arrays;
 
 
@@ -26,6 +27,18 @@ public class Conversions {
 		for(int j =0; j<arr.length; j++){
 			int bits = Float.floatToIntBits(arr[j]);
 			byte[] b = intToByta(bits);
+			bArr[4*j] = b[0];
+			bArr[4*j+1] = b[1];
+			bArr[4*j+2] = b[2];
+			bArr[4*j+3] = b[3];
+		}		
+		return bArr;
+	}
+	
+	public static byte[] toBytaArr(int[] arr){
+		byte[] bArr = new byte[arr.length*4];
+		for(int j =0; j<arr.length; j++){
+			byte[] b = intToByta(arr[j]);
 			bArr[4*j] = b[0];
 			bArr[4*j+1] = b[1];
 			bArr[4*j+2] = b[2];
@@ -99,4 +112,42 @@ public class Conversions {
 		}
 		return res;
 	}
+	
+	public static byte[] UTFToByta(String src, int length){
+		byte[] res = new byte[length];
+		char[] buf = src.toCharArray();
+		for(int i = 0; i < length; i+=2){
+			if (i < 2*buf.length){
+				res[i] = (byte) ((buf[i/2]&0xFF00)>>8);
+				res[i + 1] = (byte) (buf[i/2]&0x00FF);
+			}else{
+				res[i] = (byte) (('\0'&0xFF00)>>8);
+				res[i + 1] = (byte) ('\0'&0x00FF);
+			}			
+		}
+		return res;
+	}
+	
+	public static String bytaToUTF(byte[] byta){
+		char[] buf = new char[byta.length >> 1];
+		for(int i = 0; i < buf.length; i++){
+			char c = (char) ((byta[2*i]&0x00FF << 8) + (byta[2*i+1]&0x00FF));
+			buf[i] = c;
+		}
+		return new String(buf);
+	}
+	
+	public static byte[] combineBytas(byte[] b1, byte[] b2){
+		int length = b1.length + b2.length;
+		byte[] res = new byte[length];
+		for(int i = 0; i < b1.length; i++){
+			res[i] = b1[i];
+		}
+		for(int j = 0; j < b2.length; j++){
+			res[b1.length + j] = b2[j];
+		}
+		return res;
+			
+			
+ 	}
 }

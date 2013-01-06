@@ -1,15 +1,13 @@
 import main.bolt.EDACombineBolt;
-import main.bolt.EDASmoothBolt;
 import main.bolt.EDAPeakFinderBolt;
+import main.bolt.EDASmoothBolt;
 import main.spout.EDAChunkSpout;
 import backtype.storm.Config;
-import backtype.storm.LocalCluster;
 import backtype.storm.StormSubmitter;
 import backtype.storm.generated.AlreadyAliveException;
 import backtype.storm.generated.InvalidTopologyException;
 import backtype.storm.generated.StormTopology;
 import backtype.storm.topology.TopologyBuilder;
-import backtype.storm.utils.Utils;
 
 
 public class SimpleTopology {
@@ -37,6 +35,7 @@ public class SimpleTopology {
 		Config conf = new Config();
 		conf.setNumWorkers(NUM_OF_WORKERS);
 		conf.setMaxSpoutPending(MAX_SPOUT_PENDING);
+		conf.setDebug(true);
 		try {
 			StormSubmitter.submitTopology("simple", conf, topology);
 		} catch (AlreadyAliveException e) {
@@ -46,11 +45,11 @@ public class SimpleTopology {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-//		conf.setDebug(false);
+		
 //		
 //		LocalCluster cluster = new LocalCluster();
-//		cluster.submitTopology("test", conf, builder.createTopology());
-//		//Utils.sleep(12000);
+//		cluster.submitTopology("test", conf, topology);
+//		Utils.sleep(30000);
 //		cluster.killTopology("test");
 //		cluster.shutdown();
 		

@@ -4,8 +4,7 @@ package main.bolt;
 
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import main.utils.EDAFileWriter;
 import backtype.storm.task.OutputCollector;
@@ -19,7 +18,7 @@ public class EDACombineBolt extends BaseRichBolt {
 
 	public static final String EDA_OUT_DIR = "/home/slices/output/";
 	private OutputCollector _collector;
-	Logger _logger = LoggerFactory.getLogger(EDACombineBolt.class);
+	public static Logger _logger = Logger.getLogger(EDACombineBolt.class);
 	// private EDAFileWriter edaFileWriter;
 	public void prepare(Map stormConf, TopologyContext context,
 			OutputCollector collector) {
@@ -37,7 +36,7 @@ public class EDACombineBolt extends BaseRichBolt {
 		String origFileName = fileName.split("_part")[0];
 		int chunkSize = Integer.parseInt(fileInfo[1]);	
 		int chunkIndex = Integer.parseInt(fileInfo[2]);
-		_logger.info("---------- WRITING CHUNK INDEX: "+chunkIndex+"-----------");
+		//_logger.info("====WRITING CHUNK INDEX: "+chunkIndex+" AT TIME:"+System.currentTimeMillis());
 		
 		byte[] content = input.getBinary(1);		
 		int byteIndex = chunkIndex*chunkSize*4;
@@ -45,13 +44,14 @@ public class EDACombineBolt extends BaseRichBolt {
 		
 		//String filename = origFileName;
 		
-		EDAFileWriter.writeToFile(EDA_OUT_DIR+fileName, byteIndex, content);
+		EDAFileWriter.writeToFile(EDA_OUT_DIR+fileName, content);
 		
 		//String peakFile = fileName.split(".eda")[0];
 		byte[] maxPeaks = input.getBinary(2);
 		EDAFileWriter.writePeaksToFile(EDA_OUT_DIR+origFileName+"-mxpeaks", dataIndex, maxPeaks);
 		byte[] minPeaks = input.getBinary(3);
 		EDAFileWriter.writePeaksToFile(EDA_OUT_DIR+origFileName+"-mnpeaks", dataIndex, minPeaks);		
+		_logger.info("=====EXECUTION END TIME at COMBINE BOLT:"+System.currentTimeMillis());
 	}
 	
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {

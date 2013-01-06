@@ -3,12 +3,12 @@ package main.bolt;
 
 import java.util.Map;
 
+import main.utils.Conversions;
+import main.utils.EDAFileReader;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import main.spout.EDAChunkSpout;
-import main.utils.Conversions;
-import main.utils.EDAFileReader;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
