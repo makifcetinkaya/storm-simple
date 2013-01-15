@@ -2,11 +2,15 @@ package main.bolt;
 
 
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Map;
+
+import main.utils.EDAFileWriter;
 
 import org.apache.log4j.Logger;
 
-import main.utils.EDAFileWriter;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
@@ -18,12 +22,22 @@ public class EDACombineBolt extends BaseRichBolt {
 
 	public static final String EDA_OUT_DIR = "/home/slices/output/";
 	private OutputCollector _collector;
+	private File _logFile;
+	private FileWriter _fileWriter;
 	public static Logger _logger = Logger.getLogger(EDACombineBolt.class);
 	// private EDAFileWriter edaFileWriter;
 	public void prepare(Map stormConf, TopologyContext context,
 			OutputCollector collector) {
 		// TODO Auto-generated method stub
 		_collector = collector;
+		_logFile = new File(EDA_OUT_DIR+"log-combine");
+		try {
+			_fileWriter = new FileWriter(_logFile, true);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		//edaFileWriter = new EDAFileWriter();
 	}
 
@@ -51,7 +65,18 @@ public class EDACombineBolt extends BaseRichBolt {
 		EDAFileWriter.writePeaksToFile(EDA_OUT_DIR+origFileName+"-mxpeaks", dataIndex, maxPeaks);
 		byte[] minPeaks = input.getBinary(3);
 		EDAFileWriter.writePeaksToFile(EDA_OUT_DIR+origFileName+"-mnpeaks", dataIndex, minPeaks);		
-		_logger.info("=====EXECUTION END TIME at COMBINE BOLT:"+System.currentTimeMillis());
+		//_logger.info("=====EXECUTION END TIME at COMBINE BOLT:"+System.currentTimeMillis());
+		log("CHUNK INDEX: "+chunkIndex+" AT TIME:"+System.currentTimeMillis());
+
+	}
+	private  void log(String msg){
+		try {
+			_fileWriter.append(msg+'\n');
+			_fileWriter.flush();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {

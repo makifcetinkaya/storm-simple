@@ -30,8 +30,11 @@ public class EDAPeakFinderBolt extends BaseRichBolt{
 	public void execute(Tuple input) {
 		// TODO create peak detector according to sampling rate
 		String metadata = input.getString(0);
-		int chunkIndex = Integer.parseInt(metadata.split(",")[2]);
 		byte[] data = input.getBinary(1);
+		//_collector.emit(new Values(metadata, data, data, data));
+		
+		int chunkIndex = Integer.parseInt(metadata.split(",")[2]);
+		
 		float[] vals = Conversions.toFloatArr(data);
 		ArrayList[] peaks = PeakDetector.peakDetect(vals, 300, 0);
 		ArrayList<Integer> maxPeaks = peaks[0];

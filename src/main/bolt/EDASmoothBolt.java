@@ -4,7 +4,6 @@ package main.bolt;
 import java.util.Map;
 
 import main.utils.Conversions;
-import main.utils.EDAFileReader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +19,6 @@ import flanagan.analysis.CurveSmooth;
 
 public class EDASmoothBolt extends BaseRichBolt{
 		private OutputCollector _collector;
-		private EDAFileReader efr;
 		Logger _logger = LoggerFactory.getLogger(EDASmoothBolt.class);
 		
 		public void prepare(Map stormConf, TopologyContext context,
@@ -34,7 +32,9 @@ public class EDASmoothBolt extends BaseRichBolt{
 		 * */
 		public void execute(Tuple input) {
 			String metadata = input.getString(0);
+			
 			byte[] data = input.getBinary(1);
+			//_collector.emit(new Values(metadata, data));
 			float[] fArr = Conversions.toFloatArr(data);
 			double[] eda = Conversions.toDoubla(fArr);
 			
