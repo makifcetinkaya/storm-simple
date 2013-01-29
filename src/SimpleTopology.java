@@ -1,20 +1,21 @@
-import org.apache.log4j.Logger;
-
 import main.bolt.EDACombineBolt;
 import main.bolt.EDAPeakFinderBolt;
 import main.bolt.EDASmoothBolt;
 import main.spout.EDAChunkSpout;
+
+import org.apache.log4j.Logger;
+
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
-import backtype.storm.StormSubmitter;
-import backtype.storm.generated.AlreadyAliveException;
-import backtype.storm.generated.InvalidTopologyException;
 import backtype.storm.generated.StormTopology;
 import backtype.storm.topology.TopologyBuilder;
 
 
 public class SimpleTopology {
 	
+	private static final String QUEUE_HOST = "localhost";
+	private static final String QUEUE_NAME = "eda_queue";
+	private static final int QUEUE_PORT = 2229;
 	public static Logger _logger = Logger.getLogger(SimpleTopology.class);
 	public static int MAX_SPOUT_PENDING = 1000;
 	/**
@@ -28,10 +29,10 @@ public class SimpleTopology {
 		//int NUM_OF_MACHINES = Integer.parseInt(args[0]);
 		
 		TopologyBuilder builder = new TopologyBuilder();
-		EDAChunkSpout fs = new EDAChunkSpout();
-		builder.setSpout("filespout", fs, 1);
+		EDAChunkSpout kts = new EDAChunkSpout(QUEUE_HOST, QUEUE_PORT, QUEUE_NAME);
+		builder.setSpout("pktspout", kts, 1);
 		EDASmoothBolt esb = new EDASmoothBolt();
-		builder.setBolt("smoother", esb ,NUM_OF_WORKERS).shuffleGrouping("filespout");
+		builder.setBolt("smoother", esb ,NUM_OF_WORKERS).shuffleGrouping("pktspout");
 		EDAPeakFinderBolt epfb = new EDAPeakFinderBolt();
 		builder.setBolt("peakfinder", epfb, NUM_OF_WORKERS).shuffleGrouping("smoother");
 		EDACombineBolt ecb = new EDACombineBolt();
