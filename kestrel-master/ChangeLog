@@ -1,0 +1,127 @@
+2.4.1
+-----
+- Only rewrite journals for empty queues or when in read-behind
+
+2.4.0
+-----
+- Server status: up, read-only, quiescent
+- Support for service discovery via ZooKeeper
+- Kestrel now ignores directories in its queue path.
+- Fix load test scripts to use correct JAR name [Bryan English]
+- Scala 2.9.2, finagle 5.3.x
+
+2.3.4
+-----
+- modify configuration to allow inheritance by fanouts to masters, masters
+  to default.
+- log client description when queues are created, deleted or flushed
+
+2.3.3
+-----
+- track queue item add time and compute duration on request
+- change kestrel.sh to use old PID file so that daemon-based installs can
+  be halted
+
+2.3.2
+-----
+release: 23 Aug 2012
+
+- support gets in memcache protocol [David Pershouse]
+- add transactions, canceled_transactions stats per-queue
+- kcluster updates
+- ksniff tcpdump helper
+- aliased queue tests [Radu Voicilas]
+- removed daemon from kestrel.sh to resolve SIGHUP problems
+
+2.3.1
+-----
+release: 16 July 2012
+
+- Replaces 2.3.0
+- Introduce queue aliases, see docs/guide.md
+- Remove all queue-related stats when a queue is deleted [Cory G Watson]
+- Fanout queues are not tracked until they are successfully created (old
+  behavior caused never ending set errors if a fanout queue could not be
+  created due to filesystem name limitations, for example).
+- Non-existent queues are no longer created
+  - when transactions are confirmed or aborted
+  - on flush
+  - on delete
+  - when stats for the queue are retrieved (e.g. STATS <queue>)
+
+2.2.0
+-----
+release: 11 May 2012
+
+- Thrift interface. See src/main/thrift/kestrel.thrift. [Jason Jackson]
+- Kestrel now uses the Finagle library for networking.
+- Allow max items to be specified for memcache protocol monitor command
+- maxExpireSweep configuration to limit the number of expired items removed
+  from a queue per sweep [Hitoshi Asai]
+- maxQueueAge configuration auto deletes empty queues that have existed
+  longer than the specified time [Cory G Watson]
+- New statistics:
+    queue_creates, queue_deletes, queue_expires (global) [Cory G Watson]
+    cmd_monitor, cmd_monitor_get (global)
+    total_flushes, create_time (per-queue) [Cory G Watson]
+- Better error reporting on startup failure
+- Scala 2.9.1, sbt11, sbt-package-dist 1.0.5
+
+2.1.5
+-----
+release: 12 January 2012
+
+- Only sync to disk when there's data to be written. [Stephan Zuercher]
+- Track latency measurements better, and track the percentage of java heap
+  reserved for in-memory queues. [Stephan Zuercher]
+- Fix the startup script to work in "dash". [Matt Parlane]
+- Send the correct reponse back for the memcached protocol for delete. [Matt
+  Erkkila]
+
+2.1.4
+-----
+release: 21 November 2011
+
+- Separate timers for journal fsync operations from those used for request
+  timeouts and queue expiry
+- Additional statistics include set/get latency in microseconds and actual
+  request timeout length in milliseconds
+- Upgrade to latest Netty, Ostrich and Util libraries (fixes for Netty timer
+  bugs)
+- Creating a queue with an illegal name causes an error
+
+2.1.3
+-----
+release: 13 October 2011
+
+- Fix a bug where timers could stick around even after a client disconnected
+  or received an object.
+- Add 2 missing server stats to the ostrich port.
+
+2.1.2
+-----
+release: 29 September 2011
+
+- Fix bug 71: connection counts could go negative. [Jeff Clites]
+- Allow a queue name parameter to "dump_stats". [Jeff Clites]
+- Fix potential file descriptor leak when rotating journals. [Ross Cohen]
+
+2.1.1
+-----
+release: 23 September 2011
+
+- Remove the extra linefeed from memcache "version" and "dump_stats"
+  repsonses. [prcm]
+- Reduce the number of Promise objects created when a client isn't waiting
+  for one.
+- Use a separate background thread for expiring queue items.
+- Several improvements to the load tests. [Eric Lindvall, Jonathan Reichhold]
+- Add "version" support to the text protocol. [Cory G Watson]
+- Report latency of gets (hits vs misses) and sets.
+- Fix a deadlock with transactions that abort and hand off the aborted item
+  to a waiting client that has also disconnected. [Jeff Clites]
+- Don't fsync if nothing has been written to the journal since last time.
+  [Jeff Clites]
+- Be more careful about recovering from corrupt/truncated journals, and exit
+  cleanly if something goes awry during startup. [Jeff Clites]
+- Delete counters & gauges for queues that have been deleted. [Cory G Watson]

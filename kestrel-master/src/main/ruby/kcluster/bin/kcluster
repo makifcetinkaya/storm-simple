@@ -1,0 +1,386 @@
+#!/usr/bin/env ruby
+
+$:.push(File.dirname($0))
+require 'rubygems'
+require 'optparse'
+require 'socket'
+require 'net/http'
+require 'json'
+
+# FIXME this really only works inside twitter. it would be nice to support
+# a general serverset interface (or opensource colony).
+$colony_port = ENV["COLONY_PORT"] || 9080
+
+$options = {
+  :config_filename => ENV['HOME'] + "/.kestrel_cluster",
+  :count => 0,
+  :datacenter => 'smf1',
+  :server_list => [],
+  :port => 2223,
+  :managed => false,
+  :reverse => false,
+  :memcache_port => 22133,
+  :verbose => false,
+}
+
+def verbose(s)
+  puts s if $options[:verbose]
+end
+
+def status(s)
+  print s
+  STDOUT.flush
+end
+
+def with_server(hostname, port, &block)
+  begin
+    sock = TCPSocket.open(hostname, port)
+  rescue
+    puts "WARNING: Unable to connect to #{hostname}:#{port}"
+    return
+  end
+  begin
+    yield sock
+  ensure
+    sock.close
+  end
+end
+
+def fetch_stats(hostname, port, data)
+  verbose "--- Fetching stats from #{hostname}:#{port}"
+  begin
+    stats = JSON.parse Net::HTTP.get URI.parse("http://#{hostname}:#{port}/stats.json?period=5")
+  rescue
+    puts "WARNING: Unable to fetch stats for #{hostname}:#{port}"
+    return
+  end
+
+  collections = [ 'gauges', 'counters' ]
+
+  collections.each do |coll|
+    stats[coll].each_pair do |k,value|
+      parts = k.split('/')
+      if(parts.first == 'q')
+        queue_name = parts[-2]
+        stat = parts[-1].to_sym
+
+        queue_name = queue_name.split('+', 2).first if $options[:rollup_fanouts]
+
+        if (stat == :age_msec)
+          data[:min_age][queue_name] = value if value < data[:min_age][queue_name]
+          data[:max_age][queue_name] = value if value > data[:max_age][queue_name]
+        else
+          data[stat][queue_name] += value
+        end
+      end
+    end
+  end
+end
+
+def new_queue_stats
+  Hash.new do |h, data_type|
+    h[data_type] = Hash.new do |h, k|
+      h[k] = (data_type == :min_age) ? 2**31 : 0
+    end
+  end
+end
+
+def fetch_all
+  data = new_queue_stats
+  $options[:server_list].each do |server|
+    fetch_stats(server, $options[:port], data)
+  end
+  data
+end
+
+def fetch_all_by_host
+  data = {}
+  $options[:server_list].each do |server|
+    data[server] = new_queue_stats
+    fetch_stats(server, $options[:port], data[server])
+  end
+  data
+end
+
+def sort_data(data)
+  rv = {}
+  data.each { |key, v|
+    rv[key] = v.sort_by { |h| [ h[1], h[0] ] }
+    if($options[:reverse])
+      rv[key].reverse!
+    end
+  }
+  rv
+end
+
+def report(data, key)
+  puts ""
+  format = "%14s %s\n"
+  printf(format, key, "queue")
+  printf(format, "============", "====================")
+
+  stats = data[key] || {}
+
+  limit = stats.length
+  if ($options[:count] > 0)
+    limit = $options[:count]
+  end
+
+  stats[0..limit].each { |queue, value| printf("%14d %s\n", value, queue) }
+end
+
+def report_all(data, keys)
+
+  keys.each { |key| report(data, key) }
+  puts ""
+end
+
+def report_all_by_host(data, queue_name, keys)
+  keys.each { |key| report_by_host(data, queue_name, key) }
+  puts ""
+end
+
+def report_by_host(data, queue_name, key)
+  by_host = data.inject({}) do |accum, (host, host_data)|
+    stats = host_data[key]
+    # nil represents "host does not know this queue" as distinct from value is 0
+    accum[host] = stats.has_key?(queue_name) ? stats[queue_name] : nil
+    accum
+  end
+  format = "%14s %s\n"
+  printf(format, key, "host")
+  printf(format, "============", "====================")
+  by_host.sort.each { |host, v| printf(format, v || "n/a", host) }
+end
+
+def broadcast(command, queue_name, verb)
+  $options[:server_list].each do |server|
+    status "--- #{verb} queue #{queue_name} from #{server}:#{$options[:memcache_port]} ... "
+    with_server(server, $options[:memcache_port]) do |sock|
+      sock.puts("#{command} " + queue_name)
+      puts sock.readline.chomp
+    end
+  end
+  puts "Done."
+end
+
+def get_colony_servers
+
+  if ($options[:managed])
+    Net::HTTP.get URI.parse("http://colony.#{$options[:datacenter]}.twitter.com:#{$colony_port}/query?q=(mo%20audubon.role.#{$options[:role]}%20%26%20mo%20audubon.managed.true)")
+  else
+    Net::HTTP.get URI.parse("http://colony.#{$options[:datacenter]}.twitter.com:#{$colony_port}/query?q=mo+audubon.role.#{$options[:role]}")
+  end
+end
+
+def delete_all(queue_name)
+  broadcast("delete", queue_name, "Deleting")
+end
+
+def flush_all(queue_name)
+  broadcast("flush", queue_name, "Flushing")
+end
+
+def keep_unchanged_data(last, current)
+  rv = {}
+  current.keys.each { |key| rv[key] = keep_unchanged_hash(last[key], current[key]) }
+  rv
+end
+
+def keep_unchanged_hash(last, current)
+  rv = {}
+  last.each do |key, value|
+    rv[key] = value if current[key] == value
+  end
+  rv
+end
+
+# dump queues that appear to have neither :items nor :total_items changing.
+def find_stale(rounds)
+  puts "Check 1..."
+  last = fetch_all
+  (1...rounds).each do |i|
+    sleep 5
+    puts "Check #{i + 1}..."
+    current = fetch_all
+    last = keep_unchanged_data(last, current)
+  end
+
+  stale = (last[:total_items].keys & last[:items].keys).sort!
+  sorted = sort_data(last)
+
+  puts ""
+  puts "stale queue prediction"
+  puts "======================"
+  printf("%11s %11s %s\n", "total_items", "items", "queue")
+  printf("%11s %11s %s\n", "-----------", "-----------", "--------------------")
+  stale.each do |queue_name|
+    items = last[:items][queue_name]
+    total_items = last[:total_items][queue_name]
+    printf("%11d %11d %s\n", total_items, items, queue_name)
+  end
+end
+
+def show_versions
+  $options[:server_list].each do |server|
+    verbose "--- Fetching version from #{server}:#{$options[:memcache_port]}"
+    with_server(server, $options[:memcache_port]) do |sock|
+      sock.puts("version")
+      line = sock.gets.chomp
+      line =~ /VERSION (.*)/
+      puts "#{server}: #{$1}"
+    end
+  end
+end
+
+# ----------
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: #{$0} [options] <command>"
+  opts.separator "Example: #{$0} -f kestrel max_age"
+
+  opts.on("-c", "--count=N", "show only the top N items for the specified command (e.g. the top 10 queues by item count)") do |count|
+    $options[:count] = count.to_i
+  end
+  opts.on("-D", "--datacenter=DC", "use the specified datacenter (default: #{$options[:datacenter]}") do |datacenter|
+    $options[:datacenter] = datacenter
+  end
+  opts.on("-f", "--file=FILENAME", "load kestrel server list from file (use '-' for stdin) (default: #{$options[:config_filename]})") do |filename|
+    $options[:config_filename] = filename
+  end
+  opts.on("-H", "--host=HOSTNAME", "use a specific server") do |singlehost|
+    $options[:singlehost] = singlehost
+  end
+  opts.on("-m", "--memcache-port=N", "use memcache port (default: #{$options[:memcache_port]})") do |memcacheport|
+    $options[:memcache_port] = memcacheport
+  end
+  opts.on("-M", "--managed", "operate only on hosts with managed:true set") do |unmanaged|
+    $options[:managed] = true
+  end
+  opts.on("-p", "--port=N", "use port (default: #{$options[:port]})") do |port|
+    $options[:port] = port.to_i
+  end
+  opts.on("-r", "--role=ROLE", "load kestrel server list from colony audubon role (requires colony)") do |role|
+    $options[:role] = role
+  end
+  opts.on("-v", "--verbose", "print verbose debugging info as we work") do
+    $options[:verbose] = true
+  end
+  opts.on("-F", "--rollup-fanouts", "roll up stats for fanout queues into a single count") do
+    $options[:rollup_fanouts] = true
+  end
+  opts.on("-R", "--reverse", "reverse sort order, showing biggest items first") do |reverse|
+    $options[:reverse] = true
+  end
+  opts.on("-s", "--script-mode", "eliminates the interactive prompt when deleting or flushing queues") do
+    $options[:scriptmode] = true
+  end
+  opts.on("-b", "--by-host=QUEUE", "show a single queue's data per host") do |queue_name|
+    $options[:by_host] = queue_name
+  end
+
+  opts.separator ""
+  opts.separator "Commands:"
+  opts.separator "    all             show all of the stats summaries below (items, etc)"
+  opts.separator "    items           show item counts per queue"
+  opts.separator "    bytes           show byte counts per queue"
+  opts.separator "    mem             show in-memory byte counts per queue"
+  opts.separator "    min_age         show minimum age (msec) per queue"
+  opts.separator "    max_age         show maximum age (msec) per queue"
+  opts.separator ""
+  opts.separator "    delete <name>   remove a queue across the cluster"
+  opts.separator "    flush <name>    drain a queue across the cluster"
+  opts.separator "    stale [rounds]  try to detect stale queues (default: 5 rounds)"
+  opts.separator "    version         report versions of kestrel across the cluster"
+  opts.separator ""
+end
+
+parser.parse!(ARGV)
+
+if ARGV.size < 1
+  puts
+  puts parser
+  exit 1
+end
+
+if $options[:role]
+    data = get_colony_servers
+    $options[:server_list] = JSON.parse(data).values.flatten
+elsif $options[:singlehost]
+  $options[:server_list] = Array[$options[:singlehost]]
+else
+  server_file = $options[:config_filename] == "-" ? STDIN : File.open($options[:config_filename], "r")
+  $options[:server_list] = server_file.readlines.map { |line| line.chomp }
+  server_file.close
+end
+
+command = ARGV[0].downcase
+
+if (command == "delete" || command == "flush") && !$options[:scriptmode]
+  $options[:verbose] = true
+end
+
+if $options[:verbose]
+  puts ""
+  puts "Commands will be run against the following hosts:"
+  puts $options[:server_list].join(", ")
+  puts ""
+  print "Really use these hosts? (yes/no) "
+  STDOUT.flush
+  abort("Exited due to host confirmation") if STDIN.gets.chomp != 'yes'
+end
+
+
+if command == "all"
+  $show = [ :items, :bytes, :mem_bytes, :min_age, :max_age ]
+elsif command == "items"
+  $show = [ :items ]
+elsif command == "bytes"
+  $show = [ :bytes ]
+elsif command == "mem"
+  $show = [ :mem_bytes ]
+elsif command == "min_age"
+  $show = [ :min_age ]
+elsif command == "max_age"
+  $show = [ :max_age ]
+elsif command == "version"
+  show_versions()
+  exit 0
+elsif command == "delete" && ARGV.size == 2
+  queue_name = ARGV[1]
+  if $options[:scriptmode]
+    delete_all(queue_name)
+  else
+    print "Really delete #{queue_name}? (yes/no) "
+    STDOUT.flush
+    delete_all(queue_name) if STDIN.gets.chomp == 'yes'
+  end
+  exit 0
+elsif command == "flush" && ARGV.size == 2
+  queue_name = ARGV[1]
+  if $options[:scriptmode]
+    flush_all(queue_name)
+  else
+    print "Really flush #{queue_name}? (yes/no) "
+    STDOUT.flush
+    flush_all(queue_name) if STDIN.gets.chomp == 'yes'
+  end
+  exit 0
+elsif command == "stale"
+  rounds = ARGV[1] ? ARGV[1].to_i : 5
+  find_stale(rounds)
+  exit 0
+end
+
+if $show
+  if $options[:by_host]
+    report_all_by_host(fetch_all_by_host, $options[:by_host], $show)
+  else
+    report_all(sort_data(fetch_all), $show)
+  end
+  exit 0
+else
+  puts
+  puts parser
+  exit 1
+end

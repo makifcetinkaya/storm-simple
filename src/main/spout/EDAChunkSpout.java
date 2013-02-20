@@ -81,7 +81,7 @@ public class EDAChunkSpout extends BaseRichSpout{
 			// TODO Auto-generated method stub			
 			try {
 				List<Item> items = _kestrelClient.get(_queueName, MAX_ITEMS, TIMEOUT, AUTO_ABORT_MSEC);
-				//System.out.println("num of items:"+items.size());
+				System.out.println("num of items:"+items.size());
 				for(Item item: items){
 					byte[] packet = item.get_data();
 					assert isCorrHeader(Arrays.copyOfRange(packet, 0, 4));
